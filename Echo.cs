@@ -71,8 +71,95 @@ namespace Ateam
                 //今現在の体力値
                 float fLife = (float)character.Hp / character.MaxHp;
 
-                //エノキド担当（10割～8割）
-                if (fLife >= 0.8f)
+                         //itemある時(取られてても行ってしまう)
+                if(isItem==true &&fLife < 0.8f&&i==0)
+                {
+                    if(itemPos.x==playerList[0].BlockPos.x&& itemPos.y == playerList[0].BlockPos.y)
+                    {
+                        isItem = false;
+                    }
+
+                    Action(id, Define.Battle.ACTION_TYPE.ATTACK_LONG);
+                    //x揃える
+                    if (itemPos.x != playerList[0].BlockPos.x)
+                    {
+                        if(playerList[0].BlockPos.x<itemPos.x&&stageData[(int)playerList[0].BlockPos.x+1, (int)playerList[0].BlockPos.y]!= (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                        {
+                            Move(id, Common.MOVE_TYPE.RIGHT);
+                        }
+                        else if(playerList[0].BlockPos.x < itemPos.x && stageData[(int)playerList[0].BlockPos.x + -1, (int)playerList[0].BlockPos.y] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                        {
+                            Move(id, Common.MOVE_TYPE.LEFT);
+                        }
+                        else
+                        {
+                            int move = UnityEngine.Random.Range(0, 4);
+                            switch (move)
+                            {
+                                case 0:
+                                    //上移動
+                                    Move(id, Common.MOVE_TYPE.UP);
+                                    break;
+
+                                case 1:
+                                    //下移動
+                                    Move(id, Common.MOVE_TYPE.DOWN);
+                                    break;
+
+                                case 2:
+                                    //左移動
+                                    Move(id, Common.MOVE_TYPE.LEFT);
+                                    break;
+
+                                case 3:
+                                    //右移動
+                                    Move(id, Common.MOVE_TYPE.RIGHT);
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (playerList[0].BlockPos.y < itemPos.y && stageData[(int)playerList[0].BlockPos.x, (int)playerList[0].BlockPos.y+1] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                        {
+                            Move(id, Common.MOVE_TYPE.UP);
+                        }
+                        else if (playerList[0].BlockPos.y > itemPos.y && stageData[(int)playerList[0].BlockPos.x , (int)playerList[0].BlockPos.y-1] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                        {
+                            Move(id, Common.MOVE_TYPE.DOWN);
+                        }
+                        else
+                        {
+                            int move = UnityEngine.Random.Range(0, 4);
+                            switch (move)
+                            {
+                                case 0:
+                                    //上移動
+                                    Move(id, Common.MOVE_TYPE.UP);
+                                    break;
+
+                                case 1:
+                                    //下移動
+                                    Move(id, Common.MOVE_TYPE.DOWN);
+                                    break;
+
+                                case 2:
+                                    //左移動
+                                    Move(id, Common.MOVE_TYPE.LEFT);
+                                    break;
+
+                                case 3:
+                                    //右移動
+                                    Move(id, Common.MOVE_TYPE.RIGHT);
+                                    break;
+                            }
+                        }
+                    }
+
+
+                }
+               // エノキド担当（10割～8割）
+               else if (fLife >= 0.8f)
                 {
                     if (character.BlockPos.x < EnemyCharacter.BlockPos.x)
                     {
@@ -194,36 +281,92 @@ namespace Ateam
                 //ミカド担当（3割～0割）
                 else
                 {
-                    if (fDis <= 10.0f)
-                    {
-                        Debug.Log("Distance Flag");
+                   //直線に敵がいたら逃げる
+                    bool isStraight = false;//ストレートにいるか
+                    bool isHorizontal = false;//方向、trueなら水平上
+                    int enemyId = 0;
+                    int distance = 100;//近さ、近いほど逃げる
 
-                        if (character.BlockPos.x < EnemyCharacter.BlockPos.x)
+                    for (int enemyCount = 0; enemyCount < enemyList.Count; enemyCount++)
+                    {
+                        if (playerList[i].BlockPos.x == enemyList[enemyCount].BlockPos.x)//縦一列
                         {
-                            //右移動
-                            Move(id, Common.MOVE_TYPE.RIGHT);
-                            Debug.Log("right move");
+                            float temp = playerList[i].BlockPos.y - enemyList[enemyCount].BlockPos.y;
+                            //近かったら更新
+                            if (distance > Mathf.Abs(temp))
+                            {
+                                isHorizontal = false;
+                                distance = (int)Mathf.Abs(temp);
+                                isStraight = true;
+                                enemyId = enemyCount;
+                                Debug.Log("x軸");
+                            }
                         }
-                        else if (character.BlockPos.x > EnemyCharacter.BlockPos.x)
+                        else if (playerList[i].BlockPos.y == enemyList[enemyCount].BlockPos.y)//横一列
                         {
-                            //左移動
-                            Move(id, Common.MOVE_TYPE.LEFT);
-                            Debug.Log("left move");
-                        }
-                        else if (character.BlockPos.y < EnemyCharacter.BlockPos.y)
-                        {
-                            //上移動
-                            Move(id, Common.MOVE_TYPE.UP);
-                            Debug.Log("up move");
-                        }
-                        else if (character.BlockPos.y > EnemyCharacter.BlockPos.y)
-                        {
-                            //下移動
-                            Move(id, Common.MOVE_TYPE.DOWN);
-                            Debug.Log("down move");
+                            float temp = playerList[i].BlockPos.y - enemyList[enemyCount].BlockPos.y;
+
+                            if (distance > Mathf.Abs(temp))
+                            {
+                                Debug.Log("y軸");
+                                isHorizontal = true;
+                                distance = (int)Mathf.Abs(temp);
+                                isStraight = true;
+                                enemyId = enemyCount;
+                            }
                         }
                     }
-                    else
+
+                    if (isStraight == true)
+                    {
+                        if (isHorizontal == true)//水平のとき
+                        {
+                            //上下に逃げ道が無ければ敵と逆に、それも無理なら敵と逆方向
+                            if (playerList[i].BlockPos.y < stageData.GetLength(0) - 1 &&
+                                stageData[(int)playerList[i].BlockPos.x, (int)playerList[i].BlockPos.y + 1] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                            {
+                                Move(id, Common.MOVE_TYPE.UP);
+                            }
+                            else if (playerList[i].BlockPos.y != 0 && stageData[(int)playerList[i].BlockPos.x, (int)playerList[i].BlockPos.y - 1] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                            {
+
+                                Move(id, Common.MOVE_TYPE.DOWN);
+                            }
+                            else
+                            {
+                                if (playerList[i].BlockPos.x < stageData.GetLength(1) - 1 && enemyList[enemyId].BlockPos.x < playerList[i].BlockPos.x
+                                    && stageData[(int)playerList[i].BlockPos.x + 1, (int)playerList[i].BlockPos.y] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                                    Move(id, Common.MOVE_TYPE.RIGHT);
+                                else
+                                    Move(id, Common.MOVE_TYPE.LEFT);
+                            }
+                        }
+                        else
+                        {
+
+                            //左右に逃げ道が無ければ敵と逆に
+                            //→
+                            if (playerList[i].BlockPos.x < stageData.GetLength(1) - 1 &&
+                                stageData[(int)playerList[i].BlockPos.x + 1, (int)playerList[i].BlockPos.y] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                            {
+                                Move(id, Common.MOVE_TYPE.RIGHT);
+                            }
+                            else if (playerList[i].BlockPos.x != 0 && stageData[(int)playerList[i].BlockPos.x - 1, (int)playerList[i].BlockPos.y] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                            {
+                                Move(id, Common.MOVE_TYPE.LEFT);
+                            }
+                            else
+                            {
+                                if (playerList[i].BlockPos.y < stageData.GetLength(0) - 1 && enemyList[enemyId].BlockPos.y < playerList[i].BlockPos.y
+                                    && stageData[(int)playerList[i].BlockPos.x, (int)playerList[i].BlockPos.y + 1] != (int)Define.Stage.BLOCK_TYPE.OBSTACLE)
+                                    Move(id, Common.MOVE_TYPE.UP);
+                                else
+                                    Move(id, Common.MOVE_TYPE.DOWN);
+                            }
+
+                        }
+                    }
+                    else//一旦ランダム　//近い奴から逃げるようにする（時間あれば
                     {
                         int move = UnityEngine.Random.Range(0, 4);
                         switch (move)
@@ -250,8 +393,17 @@ namespace Ateam
                         }
                     }
 
-                    //アクションのサンプル
-                    switch (UnityEngine.Random.Range(0, 4))
+                    //無敵できる状態だったら1%で無敵になる
+                    //フレームごとにやってしまってるので1%で十分
+                    //今できるかどうか取得できないので、
+                    if (Random.Range(0, 100) < 1)
+                    {
+                        Action(id, Define.Battle.ACTION_TYPE.INVINCIBLE);
+                    }
+                    //判定できないのでいつも発射
+                    //攻撃しながら逃げる
+                    ////アクションのサンプル
+                    switch (UnityEngine.Random.Range(0, 3))
                     {
                         case 0:
                             //近距離攻撃
@@ -265,18 +417,18 @@ namespace Ateam
                             //長距離攻撃
                             Action(id, Define.Battle.ACTION_TYPE.ATTACK_LONG);
                             break;
-                        case 3:
-                            //無敵アクション
-                            Action(id, Define.Battle.ACTION_TYPE.INVINCIBLE);
-                            break;
                     }
-                }
+                }    
             }
         }
 
         //---------------------------------------------------
         // ItemSpawnCallback
         //---------------------------------------------------
+            Vector2 itemPos;//アイテム保存
+        bool isItem = false;
+
+     
         override public void ItemSpawnCallback(ItemSpawnData itemData)
         {
             if (itemData.ItemType == ItemData.ITEM_TYPE.ATTACK_UP)
@@ -290,6 +442,8 @@ namespace Ateam
             else if (itemData.ItemType == ItemData.ITEM_TYPE.HP_RECOVER)
             {
                 //Debug.Log("回復アイテム");
+                isItem = true;
+                itemPos = itemData.BlockPos;
             }
 
             //生成された位置
