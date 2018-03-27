@@ -55,13 +55,23 @@ namespace Ateam
                 CharacterModel.Data character = playerList[i];
                 int id = character.ActorId;
 
+                //敵用
+                CharacterModel.Data EnemyCharacter = enemyList[i];
+                int nEnemyId = EnemyCharacter.ActorId;
+                //敵デバッグ
+                Debug.Log("EnemyID:"+ nEnemyId + "EnemyPos(X):" + EnemyCharacter.BlockPos.x + "EnemyPos(Y):" + EnemyCharacter.BlockPos.y);
+
+                //プレイヤーとエネミーの距離取得
+                float fDis = Vector2.Distance(character.BlockPos, EnemyCharacter.BlockPos);
+                Debug.Log("Distance:" + fDis);
+
                 //自分がいるステージのブロックタイプを取得
                 Define.Stage.BLOCK_TYPE type = GetBlockType(character.BlockPos);
 
                 //今現在の体力値
                 float fLife = (float)character.Hp / character.MaxHp;
 
-                //タカハシ担当（10割～8割）
+                //エノキド担当（10割～8割）
                 if (fLife >= 0.8f)
                 {
                     int move = UnityEngine.Random.Range(0, 4);
@@ -110,7 +120,7 @@ namespace Ateam
                             break;
                     }
                 }
-                //エノキド担当（8割～3割）
+                //タカハシ担当（8割～3割）
                 else if (fLife >= 0.3f)
                 {
                     int move = UnityEngine.Random.Range(0, 4);
